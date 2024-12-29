@@ -8,21 +8,27 @@ from selenium.webdriver.support import expected_conditions as EC
 import time
 import os
 
-def download_google_maps_image(top_left_lat, top_left_lng, bottom_right_lat, bottom_right_lng):
-    # Set up Chrome options
-    chrome_options = Options()
-    chrome_options.add_argument("--headless")
-    chrome_options.add_argument("--window-size=1920x1080") 
+chrome_options = Options()
+chrome_options.add_argument("--headless")
+chrome_options.add_argument("--window-size=1920x1080") 
 
     # Set up the Chrome driver
-    chrome_driver_path = r'C:\Users\Gurshaan\Downloads\chromedriver-win64\chromedriver-win64\chromedriver.exe'
-   
-    if not os.path.isfile(chrome_driver_path):
-        raise FileNotFoundError(f"ChromeDriver not found at: {chrome_driver_path}")
-    
-    service = Service(chrome_driver_path)
-    driver = webdriver.Chrome(service=service, options=chrome_options)
+chrome_driver_path = r'C:\Users\Gurshaan\Downloads\chromedriver-win64\chromedriver-win64\chromedriver.exe'
+       
+service = Service(chrome_driver_path)
+driver = webdriver.Chrome(service=service, options=chrome_options)
 
+
+coordinates = []
+
+def read_coordinates_file(file_path):
+    with open(file_path, 'r') as file:
+        for line in file:
+            lat, lng = map(float, line.strip().split(','))
+            coordinates.append((lat, lng))
+
+def download_google_maps_image(latitude, longitude, index):
+    # Set up Chrome options
     try:
         driver.get("https://www.google.com/maps")
 
@@ -34,7 +40,7 @@ def download_google_maps_image(top_left_lat, top_left_lng, bottom_right_lat, bot
 
         search_box = driver.find_element(By.NAME, "q")
         search_box.clear()
-        search_box.send_keys(f"{top_left_lat},{top_left_lng}")
+        search_box.send_keys(f"{latitude},{longitude}")
         search_box.send_keys(Keys.RETURN)
         time.sleep(3)  # Adjust sleep time as needed
         print("Location searched successfully.")
@@ -93,7 +99,7 @@ def download_google_maps_image(top_left_lat, top_left_lng, bottom_right_lat, bot
         driver.execute_script(f"document.elementFromPoint({center_x}, {center_y}).click();")
         time.sleep(2)  # Adjust sleep time as needed
         print("Clicked in the center of the screen.")
-        driver.save_screenshot(f"map.png")
+        driver.save_screenshot(f"map.png{index}")
         print(f"Map image  downloaded successfully!")
 
     except Exception as e:
@@ -101,21 +107,18 @@ def download_google_maps_image(top_left_lat, top_left_lng, bottom_right_lat, bot
 
     finally:
         driver.quit()
+# ...existing code...
 
-coordinates = []
 
-def read_coordinates_file(file_path):
-    with open(file_path, 'r') as file:
-        for line in file:
-            lat, lng = map(float, line.strip().split(','))
-            coordinates.append((lat, lng))
-
-read_coordinates_file('datasets\coordinates.csv')
+read_coordinates_file('datasets/coordinates.csv')  # Fix path separator
 print(coordinates)
-# Example usage
-top_left_lat = 37.7749
-top_left_lng = -122.4194
-bottom_right_lat = 37.7397
-bottom_right_lng = -122.3552
 
-download_google_maps_image(top_left_lat, top_left_lng, bottom_right_lat, bottom_right_lng)
+try:
+    for i in coordinates:
+        print(i[0], i[1])
+        download_google_maps_image(str(i[0]), str(i[1]), i)  # Fix coordinate formatting
+finally:
+    driver.quit()
+
+
+    
