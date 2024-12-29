@@ -8,12 +8,28 @@ from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 import time
 import os
+import helper_functions as hf
+
 from PIL import Image
 chrome_options = Options()
 chrome_options.add_argument("--headless")
 chrome_options.add_argument("--window-size=1920x1080") 
 
 chrome_driver_path = r'D:\Downloads\chromedriver-win64\chromedriver-win64\chromedriver.exe'
+
+heat_maps = [
+    {
+        "name": "median_income",
+        "mapID": "3348#17",
+        "file_path": "maps/heat_maps/median_income/MI_map{index}.png"
+    },
+
+    {
+        "name": "ethnic_diversity",
+        "mapID": "3601#17"
+    }
+]
+
 
 def read_coordinates_file(file_path):
     coordinates = []
@@ -24,8 +40,12 @@ def read_coordinates_file(file_path):
                 lat, lng = map(float, row[:2])
                 coordinates.append((round(lat, 6), round(lng, 6)))
     return coordinates
+
 read_coordinates = read_coordinates_file("datasets/coordinates.csv")
-print(read_coordinates[0][1] )
+
+
+print(read_coordinates[0][1])
+
 service = Service(chrome_driver_path)
 driver = webdriver.Chrome(service=service, options=chrome_options)
 driver.set_window_size(1920, 1080)
@@ -38,15 +58,20 @@ def crop(image):
     cropped_img.save(image)
     print(f"Image cropped successfully!")
 
-def download_heatmap(latitude, longitude):
-    driver.get(f"https://censusmapper.ca/maps/3348#17/{latitude}/{longitude}")
-    driver.save_screenshot(f"map{latitude}_{longitude}.png")
-    print(f"Map image  downloaded successfully!")
+file_path = ""
+def download_heatmap(latitude, longitude, type, index):
+    mapId = hf.get_map_id(heat_maps, type)
+    file_path = hf.get_map_filepath(heat_maps, type, index)
+    driver.get(f"https://censusmapper.ca/maps/{mapId}/{latitude}/{longitude}")
+    time.sleep(5)
+
+    driver.save_screenshot(file_path)
+    print(f"Map image downloaded successfully!")
+    crop(file_path)
     driver.quit
 
 def main():
-    download_heatmap(read_coordinates[1][0], read_coordinates[1][1])
-    
-    crop(f"map{read_coordinates[1][0]}_{read_coordinates[1][1]}.png")
+    download_heatmap(read_coordinates[1][0], read_coordinates[1][1], "median_income",1)
+
 if __name__ == "__main__":
     main()
