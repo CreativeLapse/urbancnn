@@ -44,12 +44,24 @@ def main(file_path, lat, lng, zoom, output_file):
     generate_heatmap(coordinates, lat, lng, zoom, output_file)
 
 # Optional: Crop the image if needed
+from PIL import Image
+
 def crop(image):
     img = Image.open(image)
     width, height = img.size
-    cropped_img = img.crop((360, 150, width-900, height-150))
+
+    # Calculate the left, top, right, and bottom positions to crop
+    left = (width - 900) / 2
+    top = (height - 900) / 2
+    right = (width + 900) / 2
+    bottom = (height + 900) / 2
+
+    # Crop the image to the new box
+    cropped_img = img.crop((left, top, right, bottom))
     cropped_img.save(image)
-    print(f"Image cropped successfully!")
+    print(f"Image cropped successfully to 900x900 centered!")
+
+
 
 # Example usage
 if __name__ == "__main__":
@@ -67,8 +79,9 @@ if __name__ == "__main__":
                     coordinates.append((lat, lng))
         return coordinates
     coordinates = read_coordinates_file("datasets/coordinates.csv")
+   
     for index, (lat, lng) in enumerate(coordinates, start=1):
-        output_file = f'maps/geojson/map{z}.png'
+        output_file = f'maps/geojson/GM_map{z+1}.png'
         params = {
             'center': (lat, lng),  # Example: lat, lng for Scarborough
             'zoom': 17,  # Close zoom level

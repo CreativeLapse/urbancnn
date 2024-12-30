@@ -42,8 +42,6 @@ def main():
     
     for index, (lat, lng) in enumerate(coordinates, start=1):
         download_static_map(lat, lng, index)
-        if (index == 2):
-            break
 
 if __name__ == "__main__":
     main()

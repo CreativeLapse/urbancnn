@@ -77,7 +77,7 @@ def download_heatmap(latitude, longitude, type, index):
 
 
 def main():
-    for i in range(0,250):
+    for i in range(250,1000):
      download_heatmap(read_coordinates[i][0], read_coordinates[i][1], "ethnic_diversity",i+1)
      download_heatmap(read_coordinates[i][0], read_coordinates[i][1], "median_income", i+1)
 

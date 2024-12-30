@@ -37,12 +37,13 @@ def generate_random_coordinates(area, n_points):
     
     return points
 
-points = generate_random_coordinates(area, 250)
+points = generate_random_coordinates(area, 1000)
 
 def main():
     with open('datasets/coordinates.csv', 'a', newline='') as csvfile:
         writer = csv.writer(csvfile)
         for point in points:
             writer.writerow([point.x, point.y])
-if os.name == '__main__':
+
+if __name__ == '__main__':
     main()
