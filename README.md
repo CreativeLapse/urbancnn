@@ -50,4 +50,3 @@ All data sourced from [Toronto Open Data](https://open.toronto.ca/catalogue/)
 - [Emergency Services](https://open.toronto.ca/dataset/emergency-services/) - Police, fire, ambulance
 
 
-## Directory Structure
