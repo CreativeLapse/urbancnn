@@ -1,63 +1,83 @@
 import json
 import folium
+import numpy as np
 from folium.plugins import HeatMap
+from PIL import Image
+from io import BytesIO
+import csv
+# Step 1: Read the GeoJSON data from a file
+def read_data(file_path):
+    with open(file_path, 'r') as f:
+        data = json.load(f)
+    return data
 
-def create_heatmap_with_search(geojson_file, output_html="heatmap.html"):
-    """
-    Creates a heatmap from GeoJSON data using Folium with a lat/lon search bar.
+# Step 2: Extract coordinates from the features
+def extract_coordinates(data):
+    coordinates = []
+    for feature in data['features']:
+        coords = feature['geometry']['coordinates'][0]  # Extract first coordinate pair
+        coordinates.append([coords[1], coords[0]])  # Folium expects [lat, lon] format
+    return coordinates
 
-    Args:
-        geojson_file: Path to the GeoJSON file.
-        output_html: Path to save the output HTML file.
-    """
-    try:
-        with open(geojson_file, 'r') as f:
-            data = json.load(f)
-    except FileNotFoundError:
-        print(f"Error: File '{geojson_file}' not found.")
-        return
-    except json.JSONDecodeError:
-        print(f"Error: Invalid JSON format in '{geojson_file}'.")
-        return
+# Step 3: Generate the heatmap centered on a specific point
+def generate_heatmap(coordinates, lat, lng, zoom, output_file="heatmap.png"):
+    # Create a map centered at the given latitude and longitude with "CartoDB Positron No Labels" tiles
+    m = folium.Map(location=[lat, lng], zoom_start=zoom, tiles='CartoDB Positron', control_scale=False)
+    
+    # Add HeatMap layer
+    HeatMap(coordinates, blur=15, radius=20).add_to(m)
+    
+    # Save as HTML first
+    map_html = 'heatmap.html'
+    m.save(map_html)
 
-    heat_data = [[feature['geometry']['coordinates'][0][1], feature['geometry']['coordinates'][0][0]] for feature in data['features']]
+    # Convert to image if needed (via browser or use an external service)
+    img_data = m._to_png(5)  # Export the map as PNG with scale factor
+    img = Image.open(BytesIO(img_data))
+    img = img.resize((1920, 1080))  # Resize to match requested size
+    img.save(output_file)
 
-    if heat_data:
-        center_lat = sum(coord[0] for coord in heat_data) / len(heat_data)
-        center_lon = sum(coord[1] for coord in heat_data) / len(heat_data)
-        m = folium.Map(location=[center_lat, center_lon], zoom_start=10)
-    else:
-        print("No coordinate data found in the GeoJSON. Creating a default map.")
-        m = folium.Map(location=[43.7, -79.38], zoom_start=10)
+# Step 4: Main logic to center the heatmap on a specific point
+def main(file_path, lat, lng, zoom, output_file):
+    data = read_data(file_path)
+    coordinates = extract_coordinates(data)
+    generate_heatmap(coordinates, lat, lng, zoom, output_file)
 
-    HeatMap(heat_data, radius=25).add_to(m)
+# Optional: Crop the image if needed
+def crop(image):
+    img = Image.open(image)
+    width, height = img.size
+    cropped_img = img.crop((360, 150, width-900, height-150))
+    cropped_img.save(image)
+    print(f"Image cropped successfully!")
 
-    # Add search bar
-    m.add_child(folium.LatLngPopup())  # Needed for right-click coordinates
+# Example usage
+if __name__ == "__main__":
+    z = 0
+    file_path = 'datasets/json.txt'  # Path to your file containing the data
+    
 
-    # Custom JavaScript for the search functionality
-    js = """
-    <div style="position: absolute; top: 10px; left: 10px; z-index: 9999; background-color: white; padding: 5px; border-radius: 5px;">
-        Latitude: <input type="number" id="lat" step="0.000001" value="" style="width: 100px;"><br>
-        Longitude: <input type="number" id="lon" step="0.000001" value="" style="width: 100px;"><br>
-        <button onclick="goToLocation()">Go</button>
-    </div>
-    <script>
-        function goToLocation() {
-            var lat = document.getElementById("lat").value;
-            var lon = document.getElementById("lon").value;
-            if (lat && lon && !isNaN(lat) && !isNaN(lon)) {
-                map.setView([lat, lon], 15); // Zoom level 15
-            } else {
-                alert("Please enter valid latitude and longitude.");
-            }
+    def read_coordinates_file(file_path):
+        coordinates = []
+        with open(file_path, 'r', newline='') as file:
+            reader = csv.reader(file)
+            for row in reader:
+                if len(row) >= 2:
+                    lat, lng = map(float, row[:2])
+                    coordinates.append((lat, lng))
+        return coordinates
+    coordinates = read_coordinates_file("datasets/coordinates.csv")
+    for index, (lat, lng) in enumerate(coordinates, start=1):
+        output_file = f'maps/geojson/map{z}.png'
+        params = {
+            'center': (lat, lng),  # Example: lat, lng for Scarborough
+            'zoom': 17,  # Close zoom level
+            'size': '1920x1080',  # Size in pixels (handled via resize)
         }
-    </script>
-    """
-    m.get_root().html.add_child(folium.Element(js))
-
-    m.save(output_html)
-    print(f"Heatmap with search saved to {output_html}")
-
-
-create_heatmap_with_search("datasets\json.txt")
+    
+        # Generate heatmap
+        lat, lng = params['center']
+        zoom = params['zoom']
+        main(file_path, lat, lng, zoom, output_file)
+        crop(output_file)
+        z += 1

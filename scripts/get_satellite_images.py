@@ -16,7 +16,7 @@ def read_coordinates_file(file_path):
                 coordinates.append((lat, lng))
     return coordinates
 
-def download_static_map(lat, lng, index, save_dir='satellite/maps'):
+def download_static_map(lat, lng, index, save_dir='maps\satellite'):
     os.makedirs(save_dir, exist_ok=True)
     params = {
         'center': f'{lat},{lng}',
@@ -25,11 +25,12 @@ def download_static_map(lat, lng, index, save_dir='satellite/maps'):
         'maptype': 'satellite',
         'key': API_KEY
     }
+
     url = "https://maps.googleapis.com/maps/api/staticmap"
     response = requests.get(url, params=params)
 
     if response.status_code == 200: #sucess 
-        image_path = os.path.join(save_dir, f'satallite_map_{index}.png')
+        image_path = os.path.join(save_dir, f'SM_map{index}.png')
         with open(image_path, 'wb') as img_file:
             img_file.write(response.content)
         print(f"Map image downloaded successfully: {image_path}")

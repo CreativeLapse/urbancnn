@@ -11,11 +11,7 @@ import os
 import helper_functions as hf
 
 from PIL import Image
-chrome_options = Options()
-chrome_options.add_argument("--headless")
-chrome_options.add_argument("--window-size=1920x1080") 
 
-chrome_driver_path = r'D:\Downloads\chromedriver-win64\chromedriver-win64\chromedriver.exe'
 
 heat_maps = [
     {
@@ -26,8 +22,10 @@ heat_maps = [
 
     {
         "name": "ethnic_diversity",
-        "mapID": "3601#17"
-    }
+        "mapID": "3601#17",
+        "file_path": "maps/heat_maps/ethnic_diversity/ED_map{index}.png"
+
+    },
 ]
 
 
@@ -44,22 +42,27 @@ def read_coordinates_file(file_path):
 read_coordinates = read_coordinates_file("datasets/coordinates.csv")
 
 
-print(read_coordinates[0][1])
-
-service = Service(chrome_driver_path)
-driver = webdriver.Chrome(service=service, options=chrome_options)
-driver.set_window_size(1920, 1080)
+# print(read_coordinates[0][1])
 
 
 def crop(image):
     img = Image.open(image)
     width, height = img.size
-    cropped_img = img.crop((360, 150, width-900, height-150))
+    cropped_img = img.crop((360, 150, width-915, height-150))
     cropped_img.save(image)
     print(f"Image cropped successfully!")
 
-file_path = ""
 def download_heatmap(latitude, longitude, type, index):
+    chrome_options = Options()
+    chrome_options.add_argument("--headless")
+    chrome_options.add_argument("--window-size=1920x1080") 
+
+    chrome_driver_path = os.getenv('CHROME_DRIVER_PATH')
+
+    service = Service(chrome_driver_path)
+    driver = webdriver.Chrome(service=service, options=chrome_options)
+    driver.set_window_size(1920, 1080)
+
     mapId = hf.get_map_id(heat_maps, type)
     file_path = hf.get_map_filepath(heat_maps, type, index)
     driver.get(f"https://censusmapper.ca/maps/{mapId}/{latitude}/{longitude}")
@@ -68,10 +71,15 @@ def download_heatmap(latitude, longitude, type, index):
     driver.save_screenshot(file_path)
     print(f"Map image downloaded successfully!")
     crop(file_path)
-    driver.quit
+    time.sleep(3)
+
+
+
 
 def main():
-    download_heatmap(read_coordinates[1][0], read_coordinates[1][1], "median_income",1)
+    for i in range(0,250):
+     download_heatmap(read_coordinates[i][0], read_coordinates[i][1], "ethnic_diversity",i+1)
+     download_heatmap(read_coordinates[i][0], read_coordinates[i][1], "median_income", i+1)
 
 if __name__ == "__main__":
     main()
