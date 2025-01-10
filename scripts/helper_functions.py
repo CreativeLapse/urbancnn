@@ -15,8 +15,8 @@ def get_map_id(heat_maps, map_name):
     Retrieves the mapID for a given map name from the heat_maps list.
 
     Args:
-        heat_maps (list): List of heat map dictionaries.
-        map_name (str): The name of the heat map to search for.
+        heat_maps (list): list of heat map dictionaries.
+        map_name (str): name (key) of the heat map to search for.
 
     Returns:
         str or None: The mapID if found, else None.
