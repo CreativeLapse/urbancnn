@@ -2,6 +2,8 @@
 
 ## Overview
 Analysis of urban features using CNNs and census data heatmaps.
+Research Paper:
+https://drive.google.com/file/d/1LELj9k_HOTupvfLQv5Faird_cj2kusgX/view 
 
 ## Data Sources
 
